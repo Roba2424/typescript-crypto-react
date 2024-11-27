@@ -1,17 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-
-type FetchConfig = {
-  method?: "POST" | "DELETE" | "PUT" | "GET" | "PATCH";
-  url: string;
-  header?: object;
-  body?: object;
-};
-
-type FetchState<T> = {
-  error: string | null;
-  loading: boolean;
-  data: T | null;
-};
+import { FetchConfig } from "../ts/type/FetchConfig";
+import { FetchState } from "../ts/type/FetchState";
 
 export function useFetch<T>({
   method,
@@ -27,7 +16,11 @@ export function useFetch<T>({
     setLoading(true);
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", ...header },
+        body: method !== "GET" && body ? JSON.stringify(body) : undefined,
+      });
       const responseData = await response.json();
       setData(responseData);
     } catch (error) {
