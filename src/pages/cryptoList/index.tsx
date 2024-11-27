@@ -1,17 +1,21 @@
-import { useEffect } from "react";
-import { requestUrls } from "../../utils/constants/requestUrls";
 import { useFetch } from "../../hooks/useFetches";
 import { Table } from "antd";
 import type { TableProps } from "antd";
 import { CurrencyResponseModel } from "../../ts/type/CurrencyResponseModel";
+import { useNavigate } from "react-router";
+import { ROUTE_PATH_NAMES } from "../../utils/constants/routes";
+import { CurrencyListResponseModel } from "../../ts/type/CurrencyListResponseModel";
 
 const CryptoList = () => {
+  const navigate = useNavigate();
+  const apiUrl = process.env.REACT_APP_API_URL;
+
   const { data, loading, error } = useFetch<CurrencyResponseModel[]>({
     url: "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd",
+    header: { "x-cg-demo-api-key": "CG-91Na3gF37jLkMimFB9B4FtwP" },
   });
 
-  //TODO MOVE Detail
-  const columns: TableProps<CurrencyResponseModel>["columns"] = [
+  const columns: TableProps<CurrencyListResponseModel>["columns"] = [
     {
       title: "#ID",
       dataIndex: "id",
@@ -34,9 +38,8 @@ const CryptoList = () => {
     { title: "Price", dataIndex: "current_price", key: "current_price" },
   ];
 
-  const handleNavigateDetailPage = (row: CurrencyResponseModel) => {
-    console.log('click')
-    console.log(row.id);
+  const handleNavigateDetailPage = (rowData: CurrencyListResponseModel) => {
+    navigate(`${ROUTE_PATH_NAMES.CRYPTODETAIL}/${rowData.id}`);
   };
 
   return (
@@ -44,8 +47,8 @@ const CryptoList = () => {
       columns={columns}
       dataSource={data || []}
       loading={loading}
-      onRow={() => {
-        return { onClick: () => handleNavigateDetailPage };
+      onRow={(row) => {
+        return { onClick: () => handleNavigateDetailPage(row) };
       }}
     />
   );
