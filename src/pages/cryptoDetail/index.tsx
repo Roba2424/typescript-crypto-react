@@ -10,10 +10,12 @@ const CryptoDetail = () => {
     url: `https://api.coingecko.com/api/v3/coins/${id}`,
     header: { "x-cg-demo-api-key": "CG-91Na3gF37jLkMimFB9B4FtwP" },
   });
-  console.log(data?.image);
+  
   return (
     <div>
-      <Card cover={<img src={data?.image.small} style={{width:'50px'}}/>}></Card>
+      <Card
+        cover={<img src={data?.image.small} style={{ width: "50px" }} />}
+      ></Card>
     </div>
   );
 };
