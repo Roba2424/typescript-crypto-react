@@ -27,5 +27,16 @@ export const useQueryParam = () => {
     setSearchParams(newParam);
   };
 
-  return { getQueryParam, setQueryParam, deleteQuery };
+  const getCurrency = (): string | null => getQueryParam("currency");
+  const setCurrency = (currency: string) => setQueryParam({ currency });
+  const deleteCurrency = () => deleteQuery("currency");
+
+  return {
+    getQueryParam,
+    setQueryParam,
+    deleteQuery,
+    getCurrency,
+    setCurrency,
+    deleteCurrency,
+  };
 };
