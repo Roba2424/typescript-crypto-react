@@ -1,24 +1,32 @@
-import { useFetch } from "../../hooks/useFetches";
 import { Table, Select, Typography, Space, Card } from "antd";
 import type { TableProps } from "antd";
-import { CurrencyResponseModel } from "../../ts/type/CurrencyResponseModel";
 import { useNavigate } from "react-router";
-import { ROUTE_PATH_NAMES } from "../../utils/constants/routes";
-import { CurrencyListResponseModel } from "../../ts/type/CurrencyListResponseModel";
-import { useQueryParam } from "../../hooks/useQueryParams";
 import { useMemo, useCallback } from "react";
+import { useFetch } from "../../hooks/useFetches";
+import { useQueryParam } from "../../hooks/useQueryParams";
+import { CurrencyResponseModel } from "../../ts/type/CurrencyResponseModel";
+import { CurrencyListResponseModel } from "../../ts/type/CurrencyListResponseModel";
+import { ROUTE_PATH_NAMES } from "../../utils/constants/routes";
 import { DEFAULT_PAGINATION } from "../../utils/constants/pagination";
-import "./style.css"; 
+import "./style.css";
 
 const { Option } = Select;
 const { Title } = Typography;
+
+const currencySymbols: Record<string, string> = {
+  usd: "$",
+  rub: "₽",
+  eur: "€",
+  cny: "¥",
+};
 
 const CryptoList = () => {
   const navigate = useNavigate();
   const { getQueryParam, setQueryParam, getCurrency, setCurrency } =
     useQueryParam();
-  const pageSize = getQueryParam("pageSize") || DEFAULT_PAGINATION.pageSize;
-  const page = getQueryParam("page") || DEFAULT_PAGINATION.page;
+
+  const pageSize = Number(getQueryParam("pageSize")) || DEFAULT_PAGINATION.pageSize;
+  const page = Number(getQueryParam("page")) || DEFAULT_PAGINATION.page;
   const currency = getCurrency() || "usd";
 
   const { data, loading, error } = useFetch<CurrencyResponseModel[]>({
@@ -26,52 +34,52 @@ const CryptoList = () => {
     header: { "x-cg-demo-api-key": "CG-91Na3gF37jLkMimFB9B4FtwP" },
   });
 
-  const columns: TableProps<CurrencyListResponseModel>["columns"] =
-    useMemo(() => {
-      return [
-        {
-          title: "#",
-          dataIndex: "id",
-          key: "id",
-          render: (value, record, index) => (
-            <strong>{(Number(page) - 1) * Number(pageSize) + index + 1}</strong>
-          ),
-        },
-        {
-          title: "Image",
-          dataIndex: "image",
-          key: "image",
-          render: (value) => (
-            <img src={value} alt="crypto" className="crypto-image" />
-          ),
-        },
-        { title: "Name", dataIndex: "name", key: "name" },
-        {
-          title: "Price Change (24h)",
-          dataIndex: "price_change_24h",
-          key: "price_change_24h",
-          render: (value) => (
-            <span
-              style={{
-                color: value > 0 ? "green" : "red",
-              }}
-            >
-              {value.toFixed(2)}%
-            </span>
-          ),
-        },
-        {
-          title: "Price",
-          dataIndex: "current_price",
-          key: "current_price",
-          render: (value) => `$${value.toFixed(2)}`,
-        },
-      ];
-    }, [page, pageSize]);
-
-  const handleNavigateDetailPage = (rowData: CurrencyListResponseModel) => {
-    navigate(`${ROUTE_PATH_NAMES.CRYPTODETAIL}/${rowData.id}`);
-  };
+  const columns: TableProps<CurrencyListResponseModel>["columns"] = useMemo(
+    () => [
+      {
+        title: "#",
+        dataIndex: "id",
+        key: "id",
+        render: (_: any, __: CurrencyListResponseModel, index: number) => (
+          <strong>{(page - 1) * pageSize + index + 1}</strong>
+        ),
+      },
+      {
+        title: "Image",
+        dataIndex: "image",
+        key: "image",
+        render: (value: string) => (
+          <img src={value} alt="crypto" className="crypto-image" />
+        ),
+      },
+      {
+        title: "Name",
+        dataIndex: "name",
+        key: "name",
+      },
+      {
+        title: "Price Change (24h)",
+        dataIndex: "price_change_percentage_24h",
+        key: "price_change_percentage_24h",
+        render: (value: number) => (
+          <span style={{ color: value > 0 ? "green" : "red" }}>
+            {value.toFixed(2)}%
+          </span>
+        ),
+      },
+      {
+        title: `Price (${currency.toUpperCase()})`,
+        dataIndex: "current_price",
+        key: "current_price",
+        render: (value: number) => (
+          <span>
+            {currencySymbols[currency] || ""}{value.toFixed(2)}
+          </span>
+        ),
+      },
+    ],
+    [page, pageSize, currency]
+  );
 
   const handleCurrencyChange = useCallback(
     (value: string) => {
@@ -79,6 +87,22 @@ const CryptoList = () => {
     },
     [setCurrency]
   );
+
+  const handleNavigateDetailPage = (rowData: CurrencyListResponseModel) => {
+    navigate(`${ROUTE_PATH_NAMES.CRYPTODETAIL}/${rowData.id}`);
+  };
+
+  if (error) {
+    return (
+      <div className="crypto-list-container">
+        <Card className="crypto-list-card">
+          <Typography.Text type="danger">
+            Failed to load data. Please try again later.
+          </Typography.Text>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="crypto-list-container">
@@ -106,12 +130,12 @@ const CryptoList = () => {
           </Space>
           <Table
             columns={columns}
-            dataSource={data || []}
+            dataSource={data?.map((item) => ({ ...item, key: item.id })) || []}
             loading={loading}
             pagination={{
               total: 100,
-              current: +page,
-              pageSize: +pageSize,
+              current: page,
+              pageSize: pageSize,
               showSizeChanger: true,
               onChange(page, pageSize) {
                 setQueryParam({ page, pageSize });
